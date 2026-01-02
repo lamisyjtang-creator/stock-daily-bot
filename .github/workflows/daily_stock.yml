@@ -1,0 +1,32 @@
+name: Daily Stock Report
+
+on:
+  schedule:
+    # 上午 11 點（台灣時間 UTC+8 = 03:00 UTC）
+    - cron: "0 3 * * *"
+    # 晚上 10 點（台灣時間 UTC+8 = 14:00 UTC）
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-stock-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run stock bot
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python stock_bot.py
