@@ -21,7 +21,7 @@ PORTFOLIO = {
         "sector": "AI 科技",
         "type": "position",
         "trades": [
-            {"price": 1450.0, "amount": 144805.0},
+            {"price": 1450.0, "amount": 101500.0},
             {"price": 1425.0, "amount": 57000.0},
         ]
     },
