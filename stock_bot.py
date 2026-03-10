@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 import pandas as pd
 import yfinance as yf
 
+yf.enable_debug_mode()
+
 
 EMAIL_ADDRESS = "lamisyjtang@gmail.com"
 EMAIL_TO = "lamisyjtang@gmail.com"
@@ -131,6 +133,8 @@ def extract_single_series(data, field_name):
         return None
 
     try:
+        if field_name not in data.columns:
+            return None
         result = data[field_name]
     except Exception:
         return None
@@ -152,18 +156,23 @@ def extract_single_series(data, field_name):
 
 def download_price_data(ticker, period, interval="1d"):
     try:
-        data = yf.download(
-            ticker,
+        log(f"{ticker} 開始下載 period={period} interval={interval}")
+        tk = yf.Ticker(ticker)
+        data = tk.history(
             period=period,
             interval=interval,
-            progress=False,
             auto_adjust=False,
-            threads=False
+            timeout=20,
+            raise_errors=True
         )
+
         if data is None or data.empty:
             log(f"{ticker} 無資料")
             return None
+
+        log(f"{ticker} 下載成功 rows={len(data)}")
         return data
+
     except Exception as e:
         log(f"{ticker} 下載失敗: {repr(e)}")
         return None
@@ -176,9 +185,11 @@ def get_latest_price(ticker):
 
     close_series = extract_single_series(data, "Close")
     if close_series is None or close_series.empty:
+        log(f"{ticker} Close 欄位無有效資料")
         return None
 
     latest_price = safe_float(close_series.iloc[-1])
+    log(f"{ticker} 最新價格 {latest_price}")
     return latest_price
 
 
@@ -189,9 +200,12 @@ def get_year_high(ticker):
 
     high_series = extract_single_series(data, "High")
     if high_series is None or high_series.empty:
+        log(f"{ticker} High 欄位無有效資料")
         return None
 
-    return safe_float(high_series.max())
+    year_high = safe_float(high_series.max())
+    log(f"{ticker} 近一年高點 {year_high}")
+    return year_high
 
 
 def get_daily_history_data(ticker, period="2y"):
@@ -351,6 +365,7 @@ def check_all():
 
     total_value = 0.0
     total_cost = 0.0
+    success_count = 0
 
     summary_lines.append(f"檢查時間：{now.strftime('%Y/%m/%d %H:%M:%S')}")
     summary_lines.append("")
@@ -376,6 +391,8 @@ def check_all():
                 summary_lines.append(f"{name}（{ticker}）無法取得價格")
                 summary_lines.append("")
                 continue
+
+            success_count += 1
 
             line = f"{name}（{ticker}）"
             if sector:
@@ -573,6 +590,9 @@ def check_all():
             log(f"{ticker} 處理失敗: {repr(e)}")
             summary_lines.append(f"{info.get('name', ticker)}（{ticker}）處理失敗：{repr(e)}")
             summary_lines.append("")
+
+    if success_count == 0:
+        raise RuntimeError("所有 ticker 都抓不到資料，這次不寄送報告，請檢查 yfinance 或 Yahoo 限流問題")
 
     if total_cost > 0:
         total_gain = total_value - total_cost
