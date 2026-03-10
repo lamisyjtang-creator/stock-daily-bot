@@ -11,7 +11,7 @@ import yfinance as yf
 
 EMAIL_ADDRESS = "lamisyjtang@gmail.com"
 EMAIL_TO = "lamisyjtang@gmail.com"
-EMAIL_APP_PASSWORD = os.environ.get("btfg tcdm fgjv jsmi", "").strip()
+EMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "").strip()
 
 BASE_DIR = Path(__file__).resolve().parent
 HISTORY_PATH = BASE_DIR / "history.json"
@@ -324,7 +324,7 @@ def last_flag_value(history, ticker, flag_key):
 
 def send_email(subject, body):
     if not EMAIL_APP_PASSWORD:
-        raise RuntimeError("找不到環境變數 btfg tcdm fgjv jsmi")
+        raise RuntimeError("找不到環境變數 GMAIL_APP_PASSWORD")
 
     msg = MIMEText(body, _charset="utf-8")
     msg["Subject"] = subject
@@ -335,7 +335,7 @@ def send_email(subject, body):
 
     with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as smtp:
         smtp.starttls()
-        smtp.login(EMAIL_ADDRESS, btfg tcdm fgjv jsmi)
+        smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
         smtp.send_message(msg)
 
     log("寄信成功")
